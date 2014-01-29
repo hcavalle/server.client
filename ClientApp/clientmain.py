@@ -1,7 +1,11 @@
+#python clientmain.py 127.0.0.1 23400 "test"
+import shlex
 from pprint import pprint
 import gevent
 import gevent.socket
 import sys
+
+import simplejson as json
 
 class Client(object):
   clientsocket = None
@@ -26,7 +30,6 @@ class Client(object):
           sys.exit()
         if ( line == "help"):
           self.show_help()
-
         self.send_message(line) 
 
   def show_help(self):
