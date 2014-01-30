@@ -50,10 +50,10 @@ class Client(object):
     print "Commands available: \n"
   
   def client_receiver(self):
-    while line = self.clientsocket.recv(10000)
-      if len(line)>0:
-        self.parse_response(line)  
-   #   gevent.sleep(0)
+    line = self.clientsocket.recv(10000)
+    if len(line)>0:
+      self.parse_response(line)  
+ #   gevent.sleep(0)
   
   def parse_response(self, response):
     print response
