@@ -26,25 +26,8 @@ class ConnectionManger(object):
     #time = now()
     self.client_history.append(client) #add time as second in tuple
 
-    #return (socket, address)
+    return (client)
 
-#CAN MOVE TO SERVERi CLASSV CONNECT FUNC?
-    while True:
-      line = socket.recv(8192)
-      if len(line)>0:
-        print line
-        self.handle_input(client, line)
-      #on close exit gracefully, remoce from active list
-
-  def handle_input(self, client, client_input):
-    #set available requests, key (command) value (function, args)
-    #parse client input into pieces, (command args) and based on command, call function based on dict above
-    exploded_input = client_input.split()
-    print exploded_input
-    if exploded_input[0] == "subscribe":
-      print "CLIENT INPUT", exploded_input[0]
-      #client.add_sub(exploded_input[1])    
-    #print client_input
 
 class RequestHandler(object):
   available_requests = {
@@ -59,9 +42,9 @@ class RequestHandler(object):
 
 class Client(object):
   name = None
-  def __init__(self, connection, address):
+  def __init__(self, socket, address):
     self.address = address
-    self.connection = connection
+    self.socket = socket
     self.message_history = [] #possibly connection instead
   #set message push as eithe queue or .receive ...
   def add_message_history_item(self, message):
@@ -102,20 +85,41 @@ class ServerApp(object):
     self.host = host
     self.port = port
     self.address = (host, port)
-    self.tcp_server = gevent.server.StreamServer( (self.host, self.port), self.connection_manager.client_connect )
+    self.tcp_server = gevent.server.StreamServer( (self.host, self.port), self.new_connection )
     self.new_channel("main_channel")
     self.print_info()
     print "Server started"
 
   def new_connection(self, socket, address):
-    self.connection_manager.client_connect(socket, address)
+    client = self.connection_manager.client_connect(socket, address)
+    #CAN MOVE TO SERVERi CLASSV CONNECT FUNC?
+    input_handle = gevent.spawn(self.handle_input(client))
+    #input_handle.join()
+      #on close exit gracefully, remoce from active list
+
+  def handle_input(self, client):
+    print "in handle"
+    #set available requests, key (command) value (function, args)
+    #parse client input into pieces, (command args) and based on command, call function based on dict above
+    while True:
+      client_input = client.socket.recv(8192)
+      if len(client_input)>0:
+        print client_input
+        exploded_input = client_input.split()
+        print exploded_input
+        if exploded_input[0] == "subscribe":
+          print "CLIENT INPUT", exploded_input[0], exploded_input[1]
+          #client.add_sub(exploded_input[1])    
+        #print client_input
+        elif exploded_input[0] == "listchannels":
+          print "CLIENT INPUT", exploded_input[0], exploded_input[1]
     
   def new_channel(self, name):
     self.channel_manager.create_channel(name)
   
   def serve(self):
     try:
-      gevent.spawn(self.tcp_server.serve_forever())
+      gevent.spawn(self.tcp_server.serve_forever(), new_connection)
       print "Server started"
     except:
       print "Error starting server", sys.exc_info()[0]
@@ -126,4 +130,4 @@ class ServerApp(object):
 
 if __name__ == "__main__":
   server = ServerApp(sys.argv[1], int(sys.argv[2]))
-  gevent.spawn(server.serve())
+  server.serve()
