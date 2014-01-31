@@ -23,18 +23,19 @@ class Client(object):
       if len(name_in)>0:
         self.name = name_in
         print "Hi "+self.name+". Here's what you can do here\n"
-        self.show_help()
+        self.send_message("name "+self.name);
 
   def connect(self):
-    self.clientsocket = gevent.socket.create_connection(self.dest_addr)
-    if (self.clientsocket):
-      print "Connected to server! \n"
-    self.welcome()
-    self.clientsocket.send("name "+self.name);
-
-    while True:
-      g1 = Greenlet(self.client_sender() )
-      g2 = Greenlet(self.client_receiver() )
+    try:
+      self.clientsocket = gevent.socket.create_connection(self.dest_addr)
+      if (self.clientsocket):
+        print "Connected to server! \n"
+        while True:
+          g1 = Greenlet(self.client_sender() )
+          g2 = Greenlet(self.client_receiver() )
+    except:
+      print "Couldn't connect. Exiting..."
+      sys.exit()
 
   def client_sender(self):
     line = raw_input("Enter command: ")
@@ -42,13 +43,8 @@ class Client(object):
       if ( line == "exit"):
         print "exiting..."
         sys.exit()
-      if ( line == "help"):
-        self.show_help()
       self.send_message(line) 
 
-  def show_help(self):
-    print "Commands available: \n"
-  
   def client_receiver(self):
     line = self.clientsocket.recv(10000)
     if len(line)>0:

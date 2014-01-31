@@ -18,7 +18,9 @@ class ConnectionManger(object):
  
   def client_connect(self, socket, address):
   #add socket. funcs 
+    socket.setblocking(0)
     client = Client(socket, address)
+    print "New connection from ", address
 
     self.active_client_list.append(client)
     #time = now()
@@ -27,18 +29,17 @@ class ConnectionManger(object):
     return (client)
 
 class Client(object):
-  name = None
+  name = "Anon"
 
   def __init__(self, socket, address):
     self.address = address
     self.socket = socket
     self.message_history = [] #possibly connection instead
-    self.subs = set() #what?
+    self.subs = [] #what?
   #set message push as eithe queue or .receive ...
 
   def send(self, message):
-    self.socket.sendall(message)
-    print "response sent: ", message
+    self.socket.send(message)
 
   def add_message_history_item(self, message):
     #time = datetime.datetime.now()
@@ -59,7 +60,7 @@ class Channel(object):
   
   def subscribe(self, client):
     self.subs.add(client)
-    message = (client.name, " added to ", self.name)
+    message = client.name+" added to "+self.name
     print message
     client.send(message)
 
@@ -91,7 +92,7 @@ class ChannelManager(object):
     return self.channels
 
   def subscribe_channel(self, name, client):
-    channel = get_channel_by_name(name)
+    channel = self.get_channel_by_name(name)
     if (channel):
       channel.subscribe(client) 
       client.subscribe(channel)
@@ -114,45 +115,57 @@ class ServerApp(object):
   def new_connection(self, socket, address):
     client = self.connection_manager.client_connect(socket, address)
     #CAN MOVE TO SERVERi CLASSV CONNECT FUNC?
-    input_handle = gevent.spawn(self.handle_input(client))
+    input_handle = self.handle_input(client)
     #input_handle.join()
       #on close exit gracefully, remoce from active list
 
   def handle_input(self, client):
     #set available requests, key (command) value (function, args)
     #parse client input into pieces, (command args) and based on command, call function based on dict above
+    commands = { 
+      "name": "Takes one argument and sets it to your name on server.",
+      "listchannels": "Takes no arguments and dislplays available channels on server",
+      "createchannel": "Takes one argument and creates a channel on server with arg1 as name",
+      "subscribe": "Takes one argument as the name of the channel to subscribe to messages from", 
+      "publish": "Takes two string arguments: first is channel name, second string to publish to that channel"
+    }
     while True:
+      client.socket.settimeout(1000)
       client_input = client.socket.recv(8192)
-      if len(client_input)>0:
-        client.add_message_history_item(client_input)
-        exploded_input = client_input.split()
-        if exploded_input[0] == "listchannels":
-          print "CLIENT INPUT", exploded_input[0]
-          channels = self.channel_manager.get_channel_list()
-          for name in channels.keys():
-            response = name+"\n"
-            client.send(response)
-        elif exploded_input[0] == "subscribe":
-          print "CLIENT INPUT", exploded_input[0]
-          self.channel_manager.subscribe_channel(exploded_input[1], client)
-        elif exploded_input[0] == "publish_message":
-          print "CLIENT INPUT", exploded_input[0]
-          #check if is memeber
-          channel = self.channel_manager.get_channel_by_name(exlpoded_input[1])
-          channel.publish(exploded_input[1], client.name)
-          #else:client.send("Join a channel first.\n")
-        elif exploded_input[0] == "createchannel":
-          print "CLIENT INPUT", exploded_input[0]
-          self.channel_manager.create_channel(exploded_input[1]) 
-          client.send("Channel created. \n")
-        elif exploded_input[0] == "name":
-          print "CLIENT INPUT", exploded_input[0]
-          client.name = exploded_input[1]
-          client.send("Name updated. \n")
-        else:
-          print "default handle_input placeholder"
-          client.send("default case")
-          #client.send("message received and logged.\n")
+      client.add_message_history_item(client_input)
+
+      if not client_input:
+        break 
+      print client.name, ": ", client_input
+      exploded_input = client_input.split()
+
+      if exploded_input[0] == "listchannels":
+        channels = self.channel_manager.get_channel_list()
+        for name in channels.keys():
+          response = name+"\n"
+          client.send(response)
+      elif exploded_input[0] == "subscribe":
+        self.channel_manager.subscribe_channel(exploded_input[1], client)
+      elif exploded_input[0] == "publish_message":
+        #check if is memeber
+        channel = self.channel_manager.get_channel_by_name(exploded_input[1])
+        channel.publish(exploded_input[2], client.name)
+        #else:client.send("Join a channel first.\n")
+      elif exploded_input[0] == "createchannel":
+        self.channel_manager.create_channel(exploded_input[1]) 
+        client.send("Channel created. \n")
+      elif exploded_input[0] == "name":
+        client.name = exploded_input[1]
+        client.send("Name updated. \n")
+      elif exploded_input[0] == "exit":
+        client.socket.close()
+        print client.name+" disconnected"
+      else:
+        client.send("\nAvailable commands are:\n\n")
+        for key, value in commands.items():
+          client.send(key+"\n")
+          client.send("\t"+value+"\n\n")
+        #client.send("message received and logged.\n")
         
     
   def new_channel(self, name):
@@ -160,7 +173,7 @@ class ServerApp(object):
   
   def serve(self):
     try:
-      gevent.spawn(self.tcp_server.serve_forever(), new_connection)
+      self.tcp_server.serve_forever(), new_connection
       print "Server started"
     except:
       print "Error starting server", sys.exc_info()[0]
@@ -171,4 +184,4 @@ class ServerApp(object):
 
 if __name__ == "__main__":
   server = ServerApp(sys.argv[1], int(sys.argv[2]))
-  gevent.spawn( server.serve() )
+  server.serve()
