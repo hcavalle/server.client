@@ -1,6 +1,5 @@
 #python clientmain.py 127.0.0.1 23400 "test"
 import shlex
-from pprint import pprint
 import gevent
 from gevent import Greenlet
 import gevent.socket

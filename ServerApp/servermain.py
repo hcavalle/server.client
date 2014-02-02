@@ -1,14 +1,9 @@
 #main for server application
-from pprint import pprint
 import socket
 import gevent
 import gevent.server
 import gevent.socket
-import gevent.queue
 import sys
-import datetime
-
-import simplejson as json
 
 #import connectionhandler
 
@@ -23,7 +18,7 @@ class ConnectionManger(object):
     print "New connection from ", address
 
     self.active_client_list.append(client)
-    #time = now()
+    #time = now() - no time
     self.client_history.append(client) #add time as second in tuple
 
     return (client)
@@ -35,14 +30,13 @@ class Client(object):
     self.address = address
     self.socket = socket
     self.message_history = [] #possibly connection instead
-    self.subs = [] #what?
-  #set message push as eithe queue or .receive ...
+    self.subs = [] 
 
   def send(self, message):
     self.socket.send(message)
 
   def add_message_history_item(self, message):
-    #time = datetime.datetime.now()
+    #time = datetime.datetime.now() - NO TIME
     self.message_history.append(message)
 
   def set_name(self, name):
@@ -55,7 +49,7 @@ class Client(object):
 class Channel(object):
   def __init__(self, name):
     self.name = name
-    self.subs = set() #what?
+    self.subs = set()
     self.message_history = []
   
   def subscribe(self, client):
@@ -68,8 +62,6 @@ class Channel(object):
     for client in self.subs:
       print(client.name)
       client.send(message)
-      #client.queue.put_nowait(message)
-      #send to all using send
     self.message_history.append(message)
 
 class ChannelManager(object):
@@ -114,10 +106,8 @@ class ServerApp(object):
 
   def new_connection(self, socket, address):
     client = self.connection_manager.client_connect(socket, address)
-    #CAN MOVE TO SERVERi CLASSV CONNECT FUNC?
     input_handle = self.handle_input(client)
-    #input_handle.join()
-      #on close exit gracefully, remoce from active list
+    #on close exit gracefully, remoce from active list
 
   def handle_input(self, client):
     #set available requests, key (command) value (function, args)
@@ -147,10 +137,8 @@ class ServerApp(object):
       elif exploded_input[0] == "subscribe":
         self.channel_manager.subscribe_channel(exploded_input[1], client)
       elif exploded_input[0] == "publish_message":
-        #check if is memeber
         channel = self.channel_manager.get_channel_by_name(exploded_input[1])
         channel.publish(exploded_input[2], client.name)
-        #else:client.send("Join a channel first.\n")
       elif exploded_input[0] == "createchannel":
         self.channel_manager.create_channel(exploded_input[1]) 
         client.send("Channel created. \n")
@@ -165,7 +153,6 @@ class ServerApp(object):
         for key, value in commands.items():
           client.send(key+"\n")
           client.send("\t"+value+"\n\n")
-        #client.send("message received and logged.\n")
         
     
   def new_channel(self, name):
@@ -180,7 +167,6 @@ class ServerApp(object):
       raise
   def print_info(self):
     print self.host, " ", self.port
-   # pprint(vars(self.tcp_server))
 
 if __name__ == "__main__":
   server = ServerApp(sys.argv[1], int(sys.argv[2]))
