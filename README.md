@@ -3,7 +3,7 @@ server.client
 
 A simple server and client in python using the gevent library for concurrency. This document includes my initial software design, my notes after development of the applications and thoughts on what logical next steps would be. 
 
-Outside of research on python and go languages prior to starting the design phase (both are/were new to me) I spent about 2-3 hours thinking through the architecture. I then spent around 10 hours or so writing, testing and debugging the  applications. And then a little extra to touch this wonderful document up!
+Outside of research on python and go languages prior to starting the design phase (both are/were new to me) I spent about 2-3 hours thinking through the architecture. I then spent around 10 hours or so writing, testing and debugging the  applications. And then a little extra to touch this wonderful document up! The intention here was to stay as reasonably close to the 8-10 hour limit suggested for development of this project. Given that I'm less experienced than most candidates I gave myself more time for upfront research and planning. 
 
 setup
 =============
@@ -112,6 +112,7 @@ In the end, the application largely followed the initial design outlined with th
 * concurrent running of multiple server instances
 * handling of JSON payloads
 
+**why python, gevent, OOP and other stuff**
 Python was chosen over go for ease of development (time constraint), more thorough documentation available and more pervasive adoption. The server's top level subcomponents are implemented as objects to allow for logical clarity, modularity of functionality and abstraction of concepts. Similarly, I chose to use the gevent library for socket, server and 'threading' (greenlets are not true threads, but microthreads that all run in a single thread, swithing to emulate true concurrency - my current understanding at least!). This choice was made to lessen development time, though it came at the expense of my fully understanding the underlying implementation of sockets, servers and threading in python. Given more time, I would likely choose to rewrite this using python threads, or even go. 
 
 At a more conceptual level, I chose to go with an object orientation, 1. because I am more familiar with OOP than functional programming. Though, for the purpose of a light client server I might reconsider. Functional programming is still new to me but the idea of functions as first class objects is very powerful, and might serve well in this case (though in some cases, I do pass functions as parameters since python can do this).   
@@ -119,6 +120,8 @@ At a more conceptual level, I chose to go with an object orientation, 1. because
 A single consumer and producer model was chosen for the client for elegance and logical inclusion. The components are unified logically (abstracted to overarching client entity), but separated functionally (modularized into independent functions). 
 
 I chose not to very sparingly comment the code, since I find it self-documentating and short/simple enough to not warrant it.
+
+Though I'm sure there are others, there is one known bug I was unable to resolve given my trying to stay within a reasonable timeline: if multiple clients are subscribed to a channel, and a message is published to the channel, all clients subscribed receive the message. But, the message isn't displayed immediately; it only displays on input on the subsequent message from the client. This is because of the way the receiver is implemented, and I just couldn't work it out in time :(
 
 **next steps & time constraints** 
 If I had more time, and continued down the path I chose here there are some features and structural changes I would like to add in:
@@ -131,7 +134,7 @@ If I had more time, and continued down the path I chose here there are some feat
 * restructure the app into main and class files, and use setuptools for install. This seems a bit redundant almost, due to the brevity of the single .py files. 
 * client to client discovery and messaging (the former of these has the data structures in place on the server side, but time did not allow to continue)
 
-THANK YOU
+THANK YOU!
 =============
 
 
