@@ -1,7 +1,10 @@
 server.client
 =============
 
-A simple server and client in python using the gevent library for concurrency. This document includes my initial software design, my notes after development of the applications and thoughts on what logical next steps would be. 
+A simple server and client in python using the gevent library for concurrency. 
+
+**overview & my process**
+This document includes my initial software design, my notes after development of the applications and thoughts on what logical next steps would be. 
 
 Outside of research on python and go languages prior to starting the design phase (both are/were new to me) I spent about 2-3 hours thinking through the architecture. I then spent around 10 hours or so writing, testing and debugging the  applications. And then a little extra to touch this wonderful document up! The intention here was to stay as reasonably close to the 8-10 hour limit suggested for development of this project. Given that I'm less experienced than most candidates I gave myself more time for upfront research and planning. 
 
