@@ -36,10 +36,10 @@ phase 1: initial architecture design & thought process
 =============
 This are my original notes on the planned system architecture before developing the applications. I have cleaned up the format and brushed up the writing after finishing the application. Deviations from the original plan in this section are noted with the 'POST NOTE:' comments. These will be elaborated on in the implementation, decisions & notes section.
 
-**system purpose**
+* **system purpose**
 To allow for real time notifications between two lightweight python applications: a server and a client. 
 
-**proposed system design**
+* **proposed system design**
 The system is comprised of two interfacing python applications, a client and a server Both rely on the the gevent library for concurrency. The client application can interact with the server in the following ways:
 * connect to a running instance
 * send messages to and receive messages from the server
@@ -53,7 +53,7 @@ The server application is designed to:
 * instantiate and house 'channels' to which clients can subscribe, publish to and receive messages from
 * messages are text (ideally would handle json) 
 
-**the server**
+* **the server**
 The server service application is to acheive the functionality above through the implementation three primary components and one optional component (implemented as classes): ServerListener, ConnectionHandler, ClientManger, (ServerManager) (optional if time allows - POST NOTE: time did not allow). 
 	ServerListener
 		Instantiated on running the server application, and is responsible for opening up two sockets (A and B) set to listen persistently for incoming client connections/communications (A) and incoming server communications (B). 
@@ -90,7 +90,7 @@ The server service application is to acheive the functionality above through the
 
 		Could potential round robin client connection requests based on load...
 
-**the client**
+* **the client**
 * two modules: sender and receiver
 * ConnectionRequest
 *	MessageSend
@@ -115,7 +115,7 @@ In the end, the application largely followed the initial design outlined with th
 * concurrent running of multiple server instances
 * handling of JSON payloads
 
-**why python, gevent, OOP and other stuff**
+* **why python, gevent, OOP and other stuff**
 Python was chosen over go for ease of development (time constraint), more thorough documentation available and more pervasive adoption. The server's top level subcomponents are implemented as objects to allow for logical clarity, modularity of functionality and abstraction of concepts. Similarly, I chose to use the gevent library for socket, server and 'threading' (greenlets are not true threads, but microthreads that all run in a single thread, swithing to emulate true concurrency - my current understanding at least!). This choice was made to lessen development time, though it came at the expense of my fully understanding the underlying implementation of sockets, servers and threading in python. Given more time, I would likely choose to rewrite this using python threads, or even go. 
 
 At a more conceptual level, I chose to go with an object orientation, 1. because I am more familiar with OOP than functional programming. Though, for the purpose of a light client server I might reconsider. Functional programming is still new to me but the idea of functions as first class objects is very powerful, and might serve well in this case (though in some cases, I do pass functions as parameters since python can do this).   
@@ -126,7 +126,7 @@ I chose not to very sparingly comment the code, since I find it self-documentati
 
 Though I'm sure there are others, there is one known bug I was unable to resolve given my trying to stay within a reasonable timeline: if multiple clients are subscribed to a channel, and a message is published to the channel, all clients subscribed receive the message. But, the message isn't displayed immediately; it only displays on input on the subsequent message from the client. This is because of the way the receiver is implemented, and I just couldn't work it out in time :(
 
-**next steps & time constraints** 
+* **next steps & time constraints** 
 If I had more time, and continued down the path I chose here there are some features and structural changes I would like to add in:
 * use setuptools for installation and run
 * allow for distributed servers, with either a master message queue or entirely distrobuted design (each server treats the other like a different class of client)
