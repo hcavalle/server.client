@@ -35,15 +35,15 @@ To run the client:
 
 phase 1: initial architecture design
 =============
-This are my original notes on the planned system architecture before developing the applications. I have cleaned up the format and brushed up the writing after finishing the application. Deviations from the original plan in this section are noted with the 'POST NOTE:' comments. These will be elaborated on in the implementation, decisions & notes section.
+These are my original notes on the planned system architecture before developing the applications. I have cleaned up the format and brushed up the 'prose' found here after finishing the application. Deviations from the original plan in this section are noted with the 'POST NOTE:' comments. These changes will be elaborated on in the implementation, decisions & notes section.
 
 **system purpose**
 
-To allow for real time notifications between two lightweight python applications: a server and a client. 
+To allow for real time communication/notifications between two lightweight python applications: a server and a client. 
 
 **proposed system design**
 
-The system is comprised of two interfacing python applications, a client and a server Both rely on the the gevent library for concurrency. The client application can interact with the server in the following ways:
+The system is comprised of two interfacing python applications, a client and a server. Both rely on the the gevent library for concurrency. The client application can interact with the server in the following ways:
 * connect to a running instance
 * send messages to and receive messages from the server
 * create channels
@@ -124,11 +124,13 @@ In the end, the application largely followed the initial design outlined with th
 
 Python was chosen over go for ease of development (time constraint), more thorough documentation available and more pervasive adoption. The server's top level subcomponents are implemented as objects to allow for logical clarity, modularity of functionality and abstraction of concepts. Similarly, I chose to use the gevent library for socket, server and 'threading' (greenlets are not true threads, but microthreads that all run in a single thread, swithing to emulate true concurrency - my current understanding at least!). This choice was made to lessen development time, though it came at the expense of my fully understanding the underlying implementation of sockets, servers and threading in python. Given more time, I would likely choose to rewrite this using python threads, or even go. 
 
-At a more conceptual level, I chose to go with an object orientation, 1. because I am more familiar with OOP than functional programming. Though, for the purpose of a light client server I might reconsider. Functional programming is still new to me but the idea of functions as first class objects is very powerful, and might serve well in this case (though in some cases, I do pass functions as parameters since python can do this).   
+At a more conceptual level, I chose to go with an object orientation, 1. because I am more familiar with OOP than functional programming. Though, for the purpose of a light client server I might reconsider. Functional programming is still new to me but the idea of functions as first class objects is very powerful, and might serve well in this case (though in some cases here, I do pass functions as parameters since python can do this).   
 
-A single consumer and producer model was chosen for the client for elegance and logical inclusion. The components are unified logically (abstracted to overarching client entity), but separated functionally (modularized into independent functions). 
+A single consumer and producer client model was chosen for elegance and logical inclusion. The components are unified in the client class (abstracted), but separated functionally (modularized into independent functions). 
 
-I chose not to very sparingly comment the code, since I find it self-documentating and short/simple enough to not warrant it.
+I chose to very sparingly comment on the code, since I find it self-documentating and short/simple enough to not warrant it.
+
+**bugs**
 
 Though I'm sure there are others, there is one known bug I was unable to resolve given my trying to stay within a reasonable timeline: if multiple clients are subscribed to a channel, and a message is published to the channel, all clients subscribed receive the message. But, the message isn't displayed immediately; it only displays on input on the subsequent message from the client. This is because of the way the receiver is implemented, and I just couldn't work it out in time :(
 
